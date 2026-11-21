@@ -1,0 +1,1282 @@
+/* ==========================================================
+   Portfolio, styles
+   Cool blue-black ground with a single warm amber signal colour,
+   and a warm off-white light theme.
+
+   Contents
+    1. Tokens          colours (dark default, light override), spacing
+    2. Base            reset, [hidden], focus ring, skip link, helpers
+    3. Motion          section reveal, card entrance, theme fade,
+                       shared keyframes
+    4. Typography
+    5. Layout          container and the two-column section band
+    6. Masthead        sticky header, nav, theme toggle
+    7. Buttons
+    8. Hero            greeting, name form, photo
+    9. Skills
+   10. Projects        controls, filters, empty state, cards
+   11. Today           Hijri date panel and spinner
+   12. Contact         form, field errors, confirmation
+   13. Footer
+   14. Feedback        notices and toasts
+   15. Responsive      tablet (900px), phone (560px), small phone (380px)
+   16. Reduced motion
+
+   Every animation uses only opacity and transform, so none of them
+   cause layout work while they run.
+   ========================================================== */
+
+/* ---------- 1. Design tokens ---------- */
+:root {
+  /* Ground is a cool blue-black rather than a neutral grey, so the warm
+     amber accent reads as a deliberate complement instead of a highlight
+     pasted onto grey. */
+  --bg: #0a0c10;
+  --bg-raised: #10141a;     /* project cards and form fields */
+  --line: #1e2530;          /* visible hairlines */
+  --line-soft: #161b23;     /* section dividers */
+
+  --ink: #eaecef;           /* primary text */
+  --ink-dim: #a3abb8;       /* body copy and secondary text */
+  --ink-faint: #7b8391;     /* labels, meta, placeholders */
+
+  --accent: #e9a13b;        /* the one signal colour */
+  --accent-deep: #c8832a;
+  --accent-tint: rgba(233, 161, 59, 0.16);
+
+  /* Values that used to be hard coded in component rules. Tokens so the
+     light theme below can override them in one place. */
+  --masthead-bg: rgba(10, 12, 16, 0.82);
+  --surface-tint: rgba(255, 255, 255, 0.025);
+  --surface-tint-hover: rgba(255, 255, 255, 0.05);
+  --bg-hover: #12171e;      /* project card on hover */
+  --shadow-lift: 0 10px 28px rgba(0, 0, 0, 0.45);   /* lifted card */
+  --line-strong: #2a323f;   /* small buttons, filter pills, spinner track */
+  --field-border: #5c6473;  /* text fields: 3.3:1 on the page, 3.1:1 on the field */
+  --link-line: rgba(234, 236, 239, 0.28);
+  /* Toast colours: a tinted ground with a stronger edge. */
+  --success: #5fbf86;
+  --success-bg: #0f2219;
+  --error: #ef8476;
+  --error-bg: #2a1512;
+
+  /* Spacing scale — every gap and pad below comes from this list. */
+  --s1: 4px;   --s2: 8px;   --s3: 12px;  --s4: 16px;
+  --s5: 24px;  --s6: 32px;  --s7: 48px;  --s8: 64px;
+  --s9: 96px;  --s10: 128px;
+
+  --radius: 8px;
+  --radius-pill: 999px;
+  --container: 1120px;
+  --header-h: 68px;
+
+  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          "Helvetica Neue", Arial, sans-serif;
+
+  color-scheme: dark;
+}
+
+/* Light theme: warm off-white ground, white cards, dark text and a
+   darker amber so accent text stays above 4.5:1. Dark is the default;
+   light applies when data-theme="light" is on <html>. The inline script
+   in the <head> sets that attribute before first paint, from the saved
+   choice or, if there is none, the device setting. */
+:root[data-theme="light"] {
+  --bg: #f7f3ec;
+  --bg-raised: #ffffff;
+  --line: #e2dacb;
+  --line-soft: #ebe5da;
+
+  --ink: #1f1b16;
+  --ink-dim: #48423a;
+  --ink-faint: #696157;
+
+  --accent: #985a0b;
+  --accent-deep: #7b4808;
+  --accent-tint: rgba(152, 90, 11, 0.12);
+
+  --masthead-bg: rgba(247, 243, 236, 0.85);
+  --surface-tint: rgba(80, 50, 10, 0.03);
+  --surface-tint-hover: rgba(80, 50, 10, 0.07);
+  --bg-hover: #fffdf9;
+  --shadow-lift: 0 10px 28px rgba(70, 45, 10, 0.12);
+  --line-strong: #cbc1af;
+  --field-border: #908672;  /* 3.3:1 on the page, 3.6:1 on the field */
+  --link-line: rgba(31, 27, 22, 0.3);
+
+  --success: #1d7a45;
+  --success-bg: #e5f3ea;
+  --error: #b3261e;
+  --error-bg: #fbe8e5;
+
+  color-scheme: light;
+}
+
+/* ---------- 2. Base ---------- */
+*,
+*::before,
+*::after { box-sizing: border-box; }
+
+/* Hidden means hidden. Component rules such as `display: flex` would
+   otherwise beat the browser's own [hidden] rule and show the element. */
+[hidden] { display: none !important; }
+
+html {
+  /* Keeps anchored sections clear of the sticky masthead. */
+  scroll-padding-top: calc(var(--header-h) + var(--s5));
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink-dim);
+  font-family: var(--font);
+  font-weight: 400;
+  font-size: 1rem;
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+}
+
+img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+/* The browser's default placeholder grey falls below 4.5:1 on the dark
+   field. opacity: 1 because Firefox dims placeholders by default. */
+::placeholder {
+  color: var(--ink-faint);
+  opacity: 1;
+}
+
+::selection {
+  background: var(--accent);
+  color: var(--bg);
+}
+
+/* One visible focus treatment for every interactive element. :focus-visible
+   shows it for keyboard use and not for mouse clicks. No border-radius
+   here: the outline already follows each element's own corners, and
+   setting one squared off the pill buttons while they had focus. */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+summary:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+/* Hidden on screen, still read by screen readers. Used for labels whose
+   purpose is already clear visually. */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* <main> takes focus from the skip link via tabindex="-1". It is a
+   landing point, not a control, so it gets no ring. */
+main:focus { outline: none; }
+
+/* Skip link: first in the tab order, off screen until focused. */
+.skip-link {
+  position: absolute;
+  top: var(--s3);
+  left: var(--s3);
+  z-index: 100;
+  padding: var(--s2) var(--s4);
+  background: var(--accent);
+  color: var(--bg);
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: none;
+  border-radius: var(--radius);
+  transform: translateY(-200%);
+  transition: transform 0.15s ease;
+}
+
+.skip-link:focus { transform: translateY(0); }
+
+/* ---------- 3. Motion ---------- */
+/* Scroll reveal. js/ui.js adds .reveal-enabled only after it has checked
+   it can show the sections again, so they are never hidden when the
+   script, IntersectionObserver or motion is unavailable. */
+.reveal-enabled [data-reveal] {
+  opacity: 0;
+  transform: translateY(24px);
+}
+
+/* The transition lives on the visible state only, so hiding is instant
+   and only the reveal animates. */
+.reveal-enabled [data-reveal].is-visible {
+  opacity: 1;
+  transform: none;
+  transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+}
+
+/* Project cards enter one after another. js/projects.js sets --i to each
+   card's position (capped at 8), so the whole list lands within about
+   half a second. Fill mode `backwards` holds the start frame during the
+   delay but releases the card afterwards, so the hover lift still works. */
+.project {
+  animation: card-in 0.35s ease-out backwards;
+  animation-delay: calc(var(--i, 0) * 45ms);
+}
+
+@keyframes card-in {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* Theme cross-fade. js/theme.js adds this class only for the moment of the
+   switch, so it does not slow ordinary hover transitions. */
+.theme-fading,
+.theme-fading *,
+.theme-fading *::before,
+.theme-fading *::after {
+  transition: background-color 0.3s ease, color 0.3s ease,
+              border-color 0.3s ease, fill 0.3s ease, stroke 0.3s ease !important;
+}
+
+/* Shared by the Today panel states. */
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* ---------- 4. Typography ---------- */
+h1, h2, h3 {
+  color: var(--ink);
+  margin: 0;
+  text-wrap: balance;
+}
+
+/* Large bold type needs negative tracking or it reads loose. */
+h1 {
+  font-size: clamp(2.5rem, 1.6rem + 3.6vw, 4.25rem);
+  font-weight: 700;
+  line-height: 1.03;
+  letter-spacing: -0.035em;
+}
+
+h2 {
+  font-size: 1.05rem;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: -0.005em;
+}
+
+h3 {
+  font-size: 1.4rem;
+  font-weight: 650;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+}
+
+p { margin: 0; }
+
+/* Running text stays near 62 characters so lines do not run long. */
+.measure { max-width: 62ch; }
+
+.lede {
+  font-size: 1.0625rem;
+  line-height: 1.7;
+}
+
+/* Small uppercase label, used for the section names and field labels. */
+.label {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+a { color: inherit; }
+
+/* ---------- 5. Layout ---------- */
+.container {
+  width: 100%;
+  max-width: var(--container);
+  margin-inline: auto;
+  padding-inline: var(--s5);
+}
+
+/* Each section is a two-column band: the section name sits in a narrow
+   left column and the content fills the right. No boxes, no panels —
+   hairlines and whitespace carry the structure instead. */
+.band {
+  display: grid;
+  grid-template-columns: 190px 1fr;
+  gap: var(--s8);
+  padding-block: var(--s9);
+  border-top: 1px solid var(--line-soft);
+}
+
+.band-label {
+  position: sticky;
+  top: calc(var(--header-h) + var(--s5));
+  align-self: start;
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+}
+
+/* ---------- 6. Masthead ---------- */
+/* Flush to the top edge, full bleed, one hairline underneath.
+   No floating pill, no large corner radius. */
+.masthead {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  height: var(--header-h);
+  display: flex;
+  align-items: center;
+  background: var(--bg);              /* fallback if the next line is unsupported */
+  background: var(--masthead-bg);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.masthead .container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s5);
+}
+
+.wordmark {
+  color: var(--ink);
+  font-size: 0.95rem;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  text-decoration: none;
+}
+
+/* Segmented group: a faintly raised surface with hairline dividers, so the
+   links read as one control with depth rather than four loose words. */
+.nav-list {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  background: var(--surface-tint);
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  overflow: hidden;
+}
+
+/* Divider between adjacent items only, so the group has no stray edges. */
+.nav-list li + li {
+  border-left: 1px solid var(--line);
+}
+
+.nav-list a {
+  display: flex;
+  align-items: center;
+  padding: 0.5rem 0.95rem;
+  color: var(--ink-faint);
+  font-size: 0.8125rem;
+  text-decoration: none;
+  transition: background-color 0.12s ease, color 0.12s ease;
+  /* Suppress the browser's default blue tap flash on touch devices; the
+     :active rule below replaces it with a deliberate press state. */
+  -webkit-tap-highlight-color: transparent;
+}
+
+.nav-list a:hover {
+  background: var(--surface-tint-hover);
+  color: var(--ink);
+}
+
+/* Press feedback: the segment lights up in the accent while held. */
+.nav-list a:active {
+  background: var(--accent-tint);
+  color: var(--accent);
+}
+
+/* The group clips its overflow, so the focus ring is drawn inside. */
+.nav-list a:focus-visible {
+  outline-offset: -2px;
+  border-radius: 0;
+}
+
+/* Nav and theme toggle sit together on the right. */
+.masthead-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+}
+
+/* Same surface and hairline as the nav group, so it reads as its sibling. */
+.theme-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  background: var(--surface-tint);
+  color: var(--ink-faint);
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  cursor: pointer;
+  transition: background-color 0.12s ease, color 0.12s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.theme-toggle:hover {
+  background: var(--surface-tint-hover);
+  color: var(--ink);
+}
+
+.theme-toggle:active {
+  background: var(--accent-tint);
+  color: var(--accent);
+}
+
+.icon {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* The icon shows the theme a press switches to: the sun while dark is on,
+   the moon while light is on. */
+:root[data-theme="dark"] .icon-moon,
+:root[data-theme="light"] .icon-sun { display: none; }
+
+/* ---------- 7. Buttons ---------- */
+.button-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s5);
+  margin-top: var(--s7);
+}
+
+.btn {
+  display: inline-block;
+  padding: 0.75rem 1.5rem;
+  border: 1px solid transparent;
+  border-radius: var(--radius-pill);
+  font: inherit;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease,
+              border-color 0.15s ease;
+}
+
+/* The filled button is the only large block of accent on the page. */
+.btn-filled {
+  background: var(--accent);
+  color: var(--bg);
+}
+
+.btn-filled:hover { background: var(--accent-deep); }
+
+/* The secondary action is a plain text link, not a second pill, so the
+   two do not compete. */
+.btn-text {
+  padding: 0;
+  color: var(--ink);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  text-decoration: none;
+  /* Visible enough at rest to read as a link, solid on hover. */
+  border-bottom: 1px solid var(--link-line);
+  border-radius: 0;
+  transition: border-color 0.15s ease;
+}
+
+.btn-text:hover { border-bottom-color: var(--ink); }
+
+/* ---------- 8. Hero ---------- */
+.hero {
+  display: grid;
+  grid-template-columns: 1.45fr 1fr;
+  align-items: center;
+  gap: var(--s10);
+  padding-block: var(--s10) var(--s9);
+}
+
+/* Status line. The dot is the accent doing real work: it marks a live,
+   time-of-day value written by js/greeting.js. */
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s2);
+  margin-bottom: var(--s5);
+  color: var(--ink-faint);
+  font-size: 0.8125rem;
+}
+
+.status::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  flex-shrink: 0;
+}
+
+/* Personal greeting: a compact form, or the saved-name line, under the
+   status. Pulled up a step so it reads as part of the status line. */
+.name-form,
+.name-saved {
+  margin: calc(-1 * var(--s3)) 0 var(--s5);
+  font-size: 0.8125rem;
+}
+
+.name-form-row {
+  display: flex;
+  gap: var(--s2);
+  max-width: 320px;
+}
+
+.name-form input {
+  flex: 1;
+  min-width: 0;
+  padding: 0.4rem 0.7rem;
+  background: var(--bg-raised);
+  color: var(--ink);
+  border: 1px solid var(--field-border);
+  border-radius: var(--radius);
+  font: inherit;
+  transition: border-color 0.15s ease;
+}
+
+.name-form input:hover { border-color: var(--ink-faint); }
+
+.name-form input[aria-invalid="true"] { border-color: var(--error); }
+
+/* A quiet outlined button, so it does not compete with "View projects". */
+.btn-small {
+  padding: 0.4rem 0.9rem;
+  background: transparent;
+  color: var(--ink);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.btn-small:hover {
+  background: var(--surface-tint-hover);
+  border-color: var(--ink-faint);
+}
+
+.field-error {
+  margin-top: var(--s2);
+  color: var(--error);
+  font-size: 0.8125rem;
+}
+
+.name-saved { color: var(--ink-faint); }
+
+/* A button that looks like an inline link. It is a button because it
+   does something on the page rather than going somewhere. */
+.btn-link {
+  margin-left: var(--s1);   /* room for the focus ring after "Not Sara?" */
+  padding: 0;
+  background: none;
+  border: 0;
+  border-bottom: 1px solid var(--link-line);
+  color: var(--ink);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-link:hover { border-bottom-color: var(--ink); }
+
+.hero .lede {
+  margin-top: var(--s5);
+  color: var(--ink-dim);
+}
+
+.hero .lede + .lede { margin-top: var(--s4); }
+
+.hero-photo img {
+  width: 100%;
+  aspect-ratio: 1 / 1;      /* squarest crop the 3:2 source allows */
+  object-fit: cover;
+  object-position: center 35%;
+  border-radius: var(--radius);
+  border: 1px solid var(--line);
+}
+
+/* ---------- 9. Skills ---------- */
+/* A specification list rather than rows of pills: term on the left,
+   values on the right, separated by hairlines. */
+.spec {
+  margin: 0;
+  border-top: 1px solid var(--line-soft);
+}
+
+.spec-row {
+  display: grid;
+  grid-template-columns: 150px 1fr;
+  gap: var(--s5);
+  padding-block: var(--s4);
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.spec-row dt {
+  color: var(--ink-faint);
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.spec-row dd {
+  margin: 0;
+  color: var(--ink-dim);
+  font-size: 0.9375rem;
+}
+
+/* ---------- 10. Projects ---------- */
+/* Controls: search and sort on one row, filters below, then the count. */
+.project-controls {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s4);
+  margin-bottom: var(--s5);
+}
+
+.control-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s3);
+}
+
+.search-field {
+  position: relative;
+  flex: 1 1 260px;
+}
+
+.search-field input,
+.sort-field select {
+  width: 100%;
+  padding: 0.55rem 0.8rem;
+  background: var(--bg-raised);
+  color: var(--ink);
+  border: 1px solid var(--field-border);
+  border-radius: var(--radius);
+  font: inherit;
+  font-size: 0.875rem;
+  transition: border-color 0.15s ease;
+}
+
+/* Room on the right for the clear button. */
+.search-field input { padding-right: 2.4rem; }
+
+.search-field input:hover,
+.sort-field select:hover { border-color: var(--ink-faint); }
+
+/* The page draws its own clear button, so hide the browser's. */
+.search-field input::-webkit-search-cancel-button { -webkit-appearance: none; appearance: none; }
+
+.search-clear {
+  position: absolute;
+  top: 50%;
+  right: var(--s2);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  background: none;
+  color: var(--ink-faint);
+  border: 0;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transform: translateY(-50%);
+}
+
+.search-clear:hover {
+  background: var(--surface-tint-hover);
+  color: var(--ink);
+}
+
+.sort-field {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+}
+
+.sort-field select {
+  width: auto;
+  cursor: pointer;
+}
+
+.filter-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s2);
+}
+
+.filter-button {
+  padding: 0.35rem 0.9rem;
+  background: transparent;
+  color: var(--ink-dim);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-pill);
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.filter-button:hover {
+  background: var(--surface-tint-hover);
+  color: var(--ink);
+}
+
+/* Selected: filled, like the primary button, so it is told apart by
+   lightness and not by hue alone. Styled from aria-pressed, so the look
+   and the state screen readers hear can never disagree. */
+.filter-button[aria-pressed="true"] {
+  background: var(--accent);
+  color: var(--bg);
+  border-color: var(--accent);
+}
+
+.result-count {
+  color: var(--ink-faint);
+  font-size: 0.8125rem;
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--s4);
+  padding: var(--s6);
+  border: 1px dashed var(--line);
+  border-radius: var(--radius);
+  color: var(--ink-dim);
+}
+
+.project-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: var(--s5);
+}
+
+/* The grid is at most two columns wide (the band body is under 950px), so
+   an odd last card would leave half a row empty, including when a filter
+   leaves a single result. It spans the full row instead. */
+.project-grid > .project:last-child:nth-child(odd) { grid-column: 1 / -1; }
+
+.project {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s4);
+  padding: var(--s6);
+  background: var(--bg-raised);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  transition: transform 0.2s ease, border-color 0.2s ease,
+              background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Cards lift with a shadow and take the accent border on hover, and on
+   keyboard focus of anything inside them. */
+.project:hover,
+.project:focus-within {
+  transform: translateY(-3px);
+  border-color: var(--accent);
+  background: var(--bg-hover);
+  box-shadow: var(--shadow-lift);
+}
+
+/* Scoped to the description class rather than the bare `p`, so it cannot
+   override .project-meta on specificity. */
+.project-desc {
+  font-size: 0.9375rem;
+  color: var(--ink-dim);
+}
+
+/* Event and result on the left, year on the right. */
+.project-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--s3);
+}
+
+.project-year {
+  flex-shrink: 0;
+  color: var(--ink-faint);
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.project-meta {
+  color: var(--accent);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+/* Pills appear only here, where each one is a discrete technology. */
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s2);
+  margin: auto 0 0;
+  padding: 0;
+  padding-top: var(--s2);
+  list-style: none;
+}
+
+.chips li {
+  padding: 0.2rem 0.65rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-pill);
+  color: var(--ink-faint);
+  font-size: 0.75rem;
+}
+
+/* ---------- 11. Today (Hijri date) ---------- */
+/* A raised panel like the project cards, holding one of three states. */
+.today-panel {
+  max-width: 560px;
+  min-height: 168px;        /* keeps the height steady between states */
+  padding: var(--s6);
+  background: var(--bg-raised);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+
+/* Each state fades in when it is shown. */
+.today-state {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--s3);
+  animation: fade-in 0.3s ease-out;
+}
+
+#hijri-loading {
+  flex-direction: row;
+  align-items: center;
+  color: var(--ink-faint);
+  font-size: 0.9375rem;
+}
+
+.spinner {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  border: 2px solid var(--line-strong);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.today-en {
+  color: var(--ink);
+  font-size: 1.25rem;
+  font-weight: 650;
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+}
+
+/* dir="rtl" is set in the HTML. Aligned to the panel's left edge, like
+   the English line above it, while the text itself still runs right to
+   left. */
+.today-ar {
+  align-self: stretch;
+  color: var(--ink-dim);
+  font-size: 1.125rem;
+  line-height: 1.6;
+  text-align: left;
+}
+
+.today-greg {
+  color: var(--ink-faint);
+  font-size: 0.875rem;
+}
+
+#hijri-result .btn-small,
+.today-error .btn-small { margin-top: var(--s2); }
+
+.today-error-title {
+  color: var(--error);
+  font-weight: 600;
+}
+
+.today-error p:not(.today-error-title) {
+  color: var(--ink-dim);
+  font-size: 0.9375rem;
+}
+
+.today-note {
+  max-width: 560px;
+  margin-top: var(--s3);
+  color: var(--ink-faint);
+  font-size: 0.8125rem;
+}
+
+.today-note a {
+  color: var(--ink-dim);
+  text-decoration-color: var(--link-line);
+}
+
+.today-note a:hover { color: var(--ink); }
+
+/* ---------- 12. Contact ---------- */
+.contact-layout {
+  display: grid;
+  grid-template-columns: 1fr 1.15fr;
+  gap: var(--s8);
+  align-items: start;
+}
+
+.email-link {
+  display: inline-block;
+  margin-top: var(--s4);
+  color: var(--ink);
+  font-size: 1.125rem;
+  font-weight: 600;
+  text-decoration: none;
+  border-bottom: 1px solid var(--line);
+  word-break: break-word;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.email-link:hover {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+.contact-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s4);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s2);
+}
+
+.contact-form input,
+.contact-form textarea {
+  width: 100%;
+  padding: 0.7rem 0.9rem;
+  background: var(--bg-raised);
+  color: var(--ink);
+  border: 1px solid var(--field-border);
+  border-radius: var(--radius);
+  font: inherit;
+  font-size: 0.9375rem;
+  transition: border-color 0.15s ease;
+}
+
+.contact-form input:hover,
+.contact-form textarea:hover { border-color: var(--ink-faint); }
+
+.contact-form textarea { resize: vertical; }
+
+.contact-form .btn { align-self: flex-start; margin-top: var(--s2); }
+
+/* Styled from aria-invalid, so the red border and what a screen reader
+   hears always agree. */
+.contact-form [aria-invalid="true"],
+.contact-form [aria-invalid="true"]:hover { border-color: var(--error); }
+
+/* .field already spaces its children, so the error needs no margin. */
+.field .field-error { margin-top: 0; }
+
+.form-success {
+  padding: var(--s4) var(--s5);
+  background: var(--success-bg);
+  border: 1px solid var(--success);
+  border-radius: var(--radius);
+  color: var(--ink);
+  font-size: 0.9375rem;
+  animation: success-in 0.35s ease-out;
+}
+
+/* It takes focus to be announced, but it is not a control. */
+.form-success:focus { outline: none; }
+
+.form-success-title {
+  margin-bottom: var(--s1);
+  font-weight: 650;
+}
+
+.form-success a { font-weight: 600; }
+
+@keyframes success-in {
+  from { opacity: 0; transform: translateY(6px) scale(0.98); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* ---------- 13. Footer ---------- */
+.site-footer {
+  border-top: 1px solid var(--line-soft);
+  padding-block: var(--s6);
+}
+
+.site-footer .container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--s3);
+}
+
+.site-footer p {
+  color: var(--ink-faint);
+  font-size: 0.8125rem;
+}
+
+/* ---------- 14. Feedback ---------- */
+/* Inline notice, used when content cannot be shown (no JavaScript, or the
+   project data failed to load). */
+.notice {
+  padding: var(--s4) var(--s5);
+  border: 1px dashed var(--line);
+  border-radius: var(--radius);
+  color: var(--ink-dim);
+  font-size: 0.9375rem;
+}
+
+.notice-error { border-color: var(--error); }
+
+/* Toasts stack in the bottom corner. The region itself takes no clicks,
+   so it never blocks the page beneath it. */
+.toast-region {
+  position: fixed;
+  right: var(--s5);
+  bottom: var(--s5);
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--s2);
+  max-width: min(360px, calc(100vw - 2 * var(--s4)));
+  pointer-events: none;
+}
+
+.toast {
+  padding: var(--s3) var(--s4);
+  background: var(--bg-raised);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--ink-faint);
+  border-radius: var(--radius);
+  font-size: 0.875rem;
+  line-height: 1.5;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+  pointer-events: auto;
+  animation: toast-in 0.2s ease-out;
+}
+
+.toast-success {
+  background: var(--success-bg);
+  border-color: var(--success);
+}
+
+.toast-error {
+  background: var(--error-bg);
+  border-color: var(--error);
+}
+
+/* Duration matches TOAST_EXIT in js/ui.js. */
+.toast-leaving { animation: toast-out 0.2s ease-in forwards; }
+
+@keyframes toast-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes toast-out {
+  to { opacity: 0; transform: translateY(8px); }
+}
+
+/* ---------- 15. Responsive ---------- */
+
+/* Tablet: drop the narrow label column, stack the two-column layouts. */
+@media (max-width: 900px) {
+  .band {
+    grid-template-columns: 1fr;
+    gap: var(--s5);
+    padding-block: var(--s8);
+  }
+
+  .band-label {
+    position: static;       /* sticky has nothing to track once stacked */
+    flex-direction: row;
+    align-items: baseline;
+    gap: var(--s3);
+  }
+
+  .hero {
+    grid-template-columns: 1fr;
+    gap: var(--s7);
+    padding-block: var(--s8);
+  }
+
+  /* Photo first, as a landscape crop that shows more of the scene than
+     the desktop square, capped so it does not take over the screen. */
+  .hero-photo {
+    order: -1;
+    width: 100%;
+    max-width: 560px;
+  }
+
+  .hero-photo img {
+    aspect-ratio: 3 / 2;
+    object-position: center 30%;
+  }
+
+  .contact-layout {
+    grid-template-columns: 1fr;
+    gap: var(--s6);
+  }
+}
+
+/* Phone: one column throughout, body text at 16px, tighter padding. */
+@media (max-width: 560px) {
+  .container { padding-inline: var(--s4); }
+
+  .band { padding-block: var(--s7); }
+
+  .hero { padding-block: var(--s6) var(--s7); }
+
+  /* Body copy at a full 16px for reading on a small screen. */
+  .project-desc,
+  .spec-row dd,
+  .today-error p:not(.today-error-title) { font-size: 1rem; }
+
+  /* Form fields at 16px too: iOS Safari zooms the page into any field
+     with smaller text when it is focused. */
+  .name-form input,
+  .search-field input,
+  .sort-field select,
+  .contact-form input,
+  .contact-form textarea { font-size: 1rem; }
+
+  /* Skill rows stack term over values, with more room between rows. */
+  .spec-row {
+    grid-template-columns: 1fr;
+    gap: var(--s1);
+    padding-block: var(--s5);
+  }
+
+  /* Search on its own row, sort below it. */
+  .control-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .search-field { flex-basis: auto; }
+
+  .name-form-row { max-width: none; }
+
+  .project-grid { grid-template-columns: 1fr; }
+
+  .project { padding: var(--s5); }
+
+  .chips li {
+    padding: 0.15rem 0.55rem;
+    font-size: 0.6875rem;
+  }
+
+  .today-panel { padding: var(--s5); }
+
+  .empty-state { padding: var(--s5); }
+
+  .button-row { gap: var(--s4); }
+
+  /* Toasts span the screen with a gutter, instead of a narrow box in
+     the corner. */
+  .toast-region {
+    left: var(--s4);
+    right: var(--s4);
+    bottom: var(--s4);
+    align-items: stretch;
+    max-width: none;
+  }
+
+  .btn-filled { width: 100%; text-align: center; }
+
+  /* Tighten the segmented nav so four items and the theme toggle still
+     fit across a 360px phone. */
+  .nav-list a {
+    padding: 0.45rem 0.6rem;
+    font-size: 0.75rem;
+  }
+
+  .masthead .container { gap: var(--s3); }
+
+  .masthead-actions { gap: var(--s2); }
+
+  .theme-toggle {
+    width: 32px;
+    height: 32px;
+  }
+}
+
+/* Smallest phones (320px wide): the toggle needs the last few pixels. */
+@media (max-width: 380px) {
+  .nav-list a { padding-inline: 0.4rem; }
+}
+
+/* ---------- 16. Reduced motion ---------- */
+/* Movement is removed and everything is shown at once. Colour changes
+   still happen, just instantly. The one exception is the spinner, which
+   is slowed rather than stopped. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    /* Without this, staggered cards would sit invisible for their delay. */
+    animation-delay: 0s !important;
+  }
+
+  /* No lift; the border, background and shadow still mark the card. */
+  .project:hover,
+  .project:focus-within { transform: none; }
+
+  /* Covers a preference switched on after the page loaded. */
+  .reveal-enabled [data-reveal] {
+    opacity: 1;
+    transform: none;
+  }
+
+  /* The spinner is slowed rather than stopped: a frozen spinner no
+     longer says that something is happening. */
+  .spinner { animation-duration: 2.4s !important; }
+}

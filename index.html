@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Portfolio of Asim Asiri, a KFUPM software engineering student focused on agentic AI and full stack development." />
+  <title>Asim Asiri | Software Engineering Student</title>
+
+  <!-- Inline SVG favicon: dark rounded square with an amber A. Inline so it
+       needs no extra request and works when the page is opened from disk. -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230a0c10'/%3E%3Ctext x='32' y='46' text-anchor='middle' font-family='Segoe UI,Arial,sans-serif' font-size='40' font-weight='700' fill='%23e9a13b'%3EA%3C/text%3E%3C/svg%3E" />
+
+  <!-- Picks the theme before the stylesheet is applied, so the first paint
+       is already the right one. A saved choice wins; otherwise the device
+       setting decides. Storage can throw when it is disabled, so the read is
+       wrapped. js/theme.js takes over after load. -->
+  <script>
+    (function () {
+      var saved = null;
+      try { saved = localStorage.getItem("theme"); } catch (e) { /* storage unavailable */ }
+      var prefersLight = window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches;
+      var theme = saved === "light" || saved === "dark" ? saved : (prefersLight ? "light" : "dark");
+      document.documentElement.setAttribute("data-theme", theme);
+    })();
+  </script>
+
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+
+  <!-- First item in the tab order. Off screen until it receives focus. -->
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <!-- Masthead: flush to the top edge, one hairline underneath -->
+  <header class="masthead">
+    <div class="container">
+      <a class="wordmark" href="#about">Asim</a>
+      <div class="masthead-actions">
+        <nav aria-label="Main navigation">
+          <ul class="nav-list">
+            <li><a href="#about">About</a></li>
+            <li><a href="#skills">Skills</a></li>
+            <li><a href="#projects">Projects</a></li>
+            <li><a href="#contact">Contact</a></li>
+          </ul>
+        </nav>
+        <!-- Hidden until js/theme.js starts, so it never shows as a dead
+             button. The label is set by the script to say what a press does.
+             The icon shown is the theme the button switches to. -->
+        <button type="button" class="theme-toggle" id="theme-toggle" hidden>
+          <svg class="icon icon-sun" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" focusable="false">
+            <circle cx="12" cy="12" r="4" />
+            <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" />
+          </svg>
+          <svg class="icon icon-moon" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" focusable="false">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- tabindex="-1" lets the skip link move focus here, not only scroll -->
+  <main id="main" tabindex="-1">
+
+    <!-- About: the one section that breaks the band layout -->
+    <section id="about" class="container hero">
+      <div class="hero-text">
+        <!-- The first words are replaced by js/greeting.js based on local time
+             and, once saved, the visitor's name -->
+        <p class="status"><span id="greeting">Hello</span> — welcome to my portfolio</p>
+
+        <!-- Personal greeting. js/greeting.js shows exactly one of these two:
+             the form when no name is saved, the saved line when one is.
+             Both start hidden so neither appears if the script fails.
+             Ids are prefixed "visitor-" to stay distinct from the contact form. -->
+        <form class="name-form" id="visitor-form" novalidate hidden>
+          <label class="visually-hidden" for="visitor-name">Your name</label>
+          <div class="name-form-row">
+            <input type="text" id="visitor-name" name="visitor-name"
+                   placeholder="Your name" autocomplete="given-name"
+                   aria-describedby="visitor-name-error" />
+            <button type="submit" class="btn-small">Save</button>
+          </div>
+          <p class="field-error" id="visitor-name-error" hidden></p>
+        </form>
+        <p class="name-saved" id="visitor-saved" hidden>
+          Not <span id="visitor-saved-name"></span>?
+          <button type="button" class="btn-link" id="visitor-clear">Clear name</button>
+        </p>
+
+        <h1>I build things, then figure out the rest.</h1>
+        <p class="lede measure">
+          I'm a software engineering student at KFUPM (Class of 2027), focused on agentic AI
+          and full stack development, with hands-on experience across AI product building,
+          game development, and data projects.
+        </p>
+        <p class="lede measure">
+          Outside of coursework I do graphic design and photography, and I help run KFUPM's
+          Computer Club, where I've organized 35+ events across AI, software engineering,
+          fintech and cybersecurity for 2,500+ attendees.
+        </p>
+        <div class="button-row">
+          <a class="btn btn-filled" href="#projects">View projects</a>
+          <!-- `download` asks the browser to save the file rather than open it -->
+          <a class="btn-text" href="assets/Asim-CV.pdf" download>Download CV</a>
+          <a class="btn-text" href="#contact">Get in touch</a>
+        </div>
+      </div>
+      <div class="hero-photo">
+        <img src="assets/images/profile.jpg"
+             alt="Asim Asiri in a white thobe and event lanyard, working on a laptop at a shared table, with other participants and a presentation screen in the background"
+             width="900" height="600" />
+      </div>
+    </section>
+
+    <div class="container">
+
+      <!-- Skills: a specification list, not rows of pills -->
+      <section id="skills" class="band" data-reveal>
+        <div class="band-label">
+          <p class="label">01</p>
+          <h2>Skills</h2>
+        </div>
+        <div class="band-body">
+          <dl class="spec">
+            <div class="spec-row">
+              <dt>Languages</dt>
+              <dd>Python · Java · C · JavaScript · TypeScript · Lua</dd>
+            </div>
+            <div class="spec-row">
+              <dt>Frameworks &amp; engines</dt>
+              <dd>React · Node.js · Unity · Godot · Electron · TensorFlow · PyTorch</dd>
+            </div>
+            <div class="spec-row">
+              <dt>AI &amp; machine learning</dt>
+              <dd>Machine learning · Deep learning · Neural networks · Agentic AI · Prompt engineering</dd>
+            </div>
+            <div class="spec-row">
+              <dt>Design</dt>
+              <dd>Figma · Adobe Illustrator · Photoshop</dd>
+            </div>
+            <div class="spec-row">
+              <dt>Tools</dt>
+              <dd>Git · GitHub · SQLite</dd>
+            </div>
+          </dl>
+        </div>
+      </section>
+
+      <!-- Projects: cards are built by js/projects.js from the list in js/data.js -->
+      <section id="projects" class="band" data-reveal>
+        <div class="band-label">
+          <p class="label">02</p>
+          <h2>Projects</h2>
+        </div>
+        <div class="band-body">
+          <!-- Search, filters and sort. Hidden until js/projects.js has the
+               data, so controls never show without anything to control. -->
+          <div class="project-controls" id="project-controls" hidden>
+            <div class="control-row">
+              <div class="search-field">
+                <label class="visually-hidden" for="project-search">Search projects</label>
+                <input type="search" id="project-search" placeholder="Search projects or technologies"
+                       autocomplete="off" spellcheck="false" />
+                <button type="button" class="search-clear" id="project-search-clear" aria-label="Clear search" hidden>
+                  <svg class="icon" viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" focusable="false">
+                    <path d="M18 6 6 18M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              <div class="sort-field">
+                <label class="label" for="project-sort">Sort</label>
+                <select id="project-sort">
+                  <option value="featured">Featured</option>
+                  <option value="newest">Newest</option>
+                  <option value="alphabetical">A to Z</option>
+                </select>
+              </div>
+            </div>
+            <!-- Buttons are generated from PROJECT_TOPICS in js/data.js.
+                 aria-pressed carries both the state and the styling. -->
+            <div class="filter-group" id="project-filters" role="group" aria-label="Filter projects by topic"></div>
+            <p class="result-count" id="project-count" role="status" aria-live="polite"></p>
+          </div>
+
+          <!-- The fallback inside is replaced by js/projects.js. It stays only
+               if JavaScript is off or the script fails, so the section is
+               never left empty. -->
+          <div class="project-grid" id="project-grid">
+            <p class="notice">
+              My projects, and the search, filters and sorting for them, need JavaScript.
+              Turn it on and reload to see them, or email me at asemst2017@gmail.com.
+            </p>
+          </div>
+
+          <div class="empty-state" id="project-empty" hidden>
+            <p id="project-empty-message"></p>
+            <button type="button" class="btn-small" id="project-reset">Show all projects</button>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- Today: the visitor's date in the Hijri calendar, from a public API.
+           js/hijri.js shows exactly one of the three states at a time. All
+           start hidden, so nothing half-built shows if the script fails. -->
+      <section id="today" class="band" data-reveal>
+        <div class="band-label">
+          <p class="label">03</p>
+          <h2>Today</h2>
+        </div>
+        <div class="band-body">
+          <div class="today-panel" aria-live="polite" aria-busy="false" id="hijri-panel">
+
+            <div class="today-state" id="hijri-loading" hidden>
+              <span class="spinner" aria-hidden="true"></span>
+              <p>Converting today&rsquo;s date&hellip;</p>
+            </div>
+
+            <div class="today-state" id="hijri-result" hidden>
+              <p class="today-en" id="hijri-en"></p>
+              <p class="today-ar" id="hijri-ar" lang="ar" dir="rtl"></p>
+              <p class="today-greg" id="hijri-greg"></p>
+              <button type="button" class="btn-small" id="hijri-refresh">Refresh</button>
+            </div>
+
+            <div class="today-state today-error" id="hijri-error" hidden>
+              <p class="today-error-title">Couldn&rsquo;t load today&rsquo;s Hijri date</p>
+              <p id="hijri-error-message"></p>
+              <button type="button" class="btn-small" id="hijri-retry">Try again</button>
+            </div>
+
+            <!-- Hidden by js/hijri.js when it starts. Stays only if
+                 JavaScript is off or the script fails. -->
+            <p id="hijri-fallback">Today&rsquo;s Hijri date is converted live with JavaScript. Turn it on and reload to see it.</p>
+          </div>
+          <p class="today-note">
+            Converted live from your device&rsquo;s date by the free
+            <a href="https://aladhan.com/islamic-calendar-api" rel="noopener">Aladhan</a> public API.
+          </p>
+        </div>
+      </section>
+
+      <!-- Contact: front end only, the form does not submit anywhere -->
+      <section id="contact" class="band" data-reveal>
+        <div class="band-label">
+          <p class="label">04</p>
+          <h2>Contact</h2>
+        </div>
+        <div class="band-body">
+          <div class="contact-layout">
+            <div>
+              <p class="measure">
+                Have a project, an idea, or just want to say hi? Send a message, or email me
+                directly.
+              </p>
+              <a class="email-link" href="mailto:asemst2017@gmail.com">asemst2017@gmail.com</a>
+            </div>
+
+            <!-- novalidate turns off the browser's popups; js/contact.js shows
+                 its own messages under each field instead. Each field points
+                 at its error with aria-describedby. -->
+            <form class="contact-form" id="contact-form" action="#" method="post" novalidate>
+              <div class="field">
+                <label class="label" for="name">Name</label>
+                <input type="text" id="name" name="name" autocomplete="name" required
+                       aria-describedby="name-error" />
+                <p class="field-error" id="name-error" hidden></p>
+              </div>
+              <div class="field">
+                <label class="label" for="email">Email</label>
+                <input type="email" id="email" name="email" autocomplete="email" required
+                       aria-describedby="email-error" />
+                <p class="field-error" id="email-error" hidden></p>
+              </div>
+              <div class="field">
+                <label class="label" for="message">Message</label>
+                <textarea id="message" name="message" rows="5" required
+                          aria-describedby="message-error"></textarea>
+                <p class="field-error" id="message-error" hidden></p>
+              </div>
+              <button type="submit" class="btn btn-filled">Send message</button>
+
+              <!-- Shown after a valid submission. tabindex="-1" so focus can
+                   move here once the form is reset. -->
+              <div class="form-success" id="contact-success" tabindex="-1" hidden>
+                <p class="form-success-title" id="contact-success-title"></p>
+                <p>
+                  This form is a front end demo, so nothing was sent. To reach me,
+                  email <a href="mailto:asemst2017@gmail.com">asemst2017@gmail.com</a> directly.
+                </p>
+              </div>
+            </form>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <p>&copy; 2026 Asim Asiri</p>
+      <p>SWE 363 Assignment 2</p>
+    </div>
+  </footer>
+
+  <!-- Toast messages are added here by UI.toast() in js/ui.js. A polite live
+       region, so screen readers announce each one without interrupting. -->
+  <div class="toast-region" id="toast-region" role="status" aria-live="polite"></div>
+
+  <!-- Plain scripts, not ES modules: modules are blocked on file://.
+       Order matters: data and shared helpers first, then one file per
+       feature. `defer` keeps this order and runs them after parsing. -->
+  <script src="js/data.js" defer></script>
+  <script src="js/ui.js" defer></script>
+  <script src="js/theme.js" defer></script>
+  <script src="js/greeting.js" defer></script>
+  <script src="js/projects.js" defer></script>
+  <script src="js/contact.js" defer></script>
+  <script src="js/hijri.js" defer></script>
+</body>
+</html>

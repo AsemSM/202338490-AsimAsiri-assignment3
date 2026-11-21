@@ -1,0 +1,22 @@
+.DS_Store
+Thumbs.db
+node_modules/
+.vscode/
+*.log
+
+# Working notes and AI-assistant context (not deliverables)
+CLAUDE.md
+content-notes.md
+design.md
+build-prompt.md
+refrance for some color direction not fully.webp
+QUESTIONS.md
+
+# AI evidence goes in the Blackboard ZIP, not the repo
+conversation.txt
+conversations/
+artifacts/
+*-ai-evidence.zip
+
+# Browser automation output
+.playwright-mcp/
