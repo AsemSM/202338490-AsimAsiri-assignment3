@@ -1193,6 +1193,12 @@ a { color: inherit; }
   font-size: 0.8125rem;
 }
 
+/* Tabular digits stop the line shifting as the seconds change. */
+.visit-timer time {
+  color: var(--ink-dim);
+  font-variant-numeric: tabular-nums;
+}
+
 /* ---------- 14. Feedback ---------- */
 /* Inline notice, used when content cannot be shown (no JavaScript, or the
    project data failed to load). */

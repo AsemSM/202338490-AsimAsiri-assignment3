@@ -352,7 +352,11 @@
   <footer class="site-footer">
     <div class="container">
       <p>&copy; 2026 Asim Asiri</p>
-      <p>SWE 363 Assignment 2</p>
+      <!-- Filled and shown by js/timer.js; hidden if the script fails. -->
+      <p class="visit-timer" id="visit-timer" hidden>
+        Time on this page: <time id="visit-time" datetime="PT0S">0s</time>
+      </p>
+      <p>SWE 363 Assignment 3</p>
     </div>
   </footer>
 
@@ -371,5 +375,6 @@
   <script src="js/contact.js" defer></script>
   <script src="js/github.js" defer></script>
   <script src="js/hijri.js" defer></script>
+  <script src="js/timer.js" defer></script>
 </body>
 </html>
