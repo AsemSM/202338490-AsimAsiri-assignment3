@@ -200,30 +200,35 @@ const UI = (function () {
    * Fades elements in the first time they scroll into view. Elements are
    * only hidden once this has confirmed it can show them again: without
    * IntersectionObserver, or with reduced motion on, nothing is hidden.
-   * Elements already on screen are marked visible straight away so they
-   * do not blink out and back in.
+   *
+   * Nothing is hidden until the observer's first report, which arrives
+   * with every element's position. Elements already on screen then are
+   * marked visible in the same step, so they never blink out and back in.
+   * Reading positions from the report rather than getBoundingClientRect()
+   * avoids forcing an extra layout while the page is still starting up
+   * (Lighthouse flagged about 40 ms of forced reflow here).
    * @param {string} selector
    */
   function reveal(selector) {
     if (!("IntersectionObserver" in window) || prefersReducedMotion()) return;
 
-    const items = document.querySelectorAll(selector);
+    let firstReport = true;
     const observer = new IntersectionObserver(function (entries) {
       entries.forEach(function (entry) {
-        if (!entry.isIntersecting) return;
+        const onScreenAtLoad = firstReport && entry.boundingClientRect.top < window.innerHeight;
+        if (!entry.isIntersecting && !onScreenAtLoad) return;
         entry.target.classList.add("is-visible");
         observer.unobserve(entry.target);   // once only
       });
+      if (firstReport) {
+        firstReport = false;
+        document.documentElement.classList.add("reveal-enabled");
+      }
     }, { rootMargin: "0px 0px -10% 0px" });
 
-    items.forEach(function (item) {
-      if (item.getBoundingClientRect().top < window.innerHeight) {
-        item.classList.add("is-visible");
-      } else {
-        observer.observe(item);
-      }
+    document.querySelectorAll(selector).forEach(function (item) {
+      observer.observe(item);
     });
-    document.documentElement.classList.add("reveal-enabled");
   }
 
   init("reveal", function () { reveal("[data-reveal]"); });
