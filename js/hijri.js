@@ -5,34 +5,21 @@
 // The panel has three states, loading, result and error, and setState() is
 // the only code that shows or hides them, so exactly one is visible.
 //
-// Every failure is turned into a plain message. The browser's own strings,
-// such as "Failed to fetch", are never shown.
+// The request itself, its time limit and its failure kinds come from
+// UI.fetchJSON in js/ui.js. Every failure is turned into a plain message.
+// The browser's own strings, such as "Failed to fetch", are never shown.
 
 const HIJRI_API = "https://api.aladhan.com/v1/gToH/";
 const HIJRI_TIMEOUT = 8000;   // ms before the request is abandoned
 
-// Messages for each kind of failure. Keys are HijriError kinds.
+// Messages for each kind of failure. Keys are UI.RequestError kinds.
 const HIJRI_MESSAGES = {
   offline: "Your device is offline. Connect to the internet, then try again.",
   timeout: "The date service took more than 8 seconds to answer. It may be busy, so try again in a moment.",
   network: "The date service could not be reached. Check your connection, or a network filter may be blocking it.",
-  server: "The date service had a problem on its side. Try again in a moment.",
+  http: "The date service had a problem on its side. Try again in a moment.",
   data: "The date service sent back a reply this page could not read, so no date is shown."
 };
-
-/**
- * An error with a `kind` that picks the message above.
- * @param {"offline"|"timeout"|"network"|"server"|"data"} kind
- * @param {string} [detail] logged to the console, never shown
- */
-class HijriError extends Error {
-  constructor(kind, detail) {
-    super(detail || kind);
-    this.name = "HijriError";
-    this.kind = kind;
-    this.detail = detail || kind;
-  }
-}
 
 /**
  * Today's date on the visitor's device as DD-MM-YYYY, the format the API
@@ -58,7 +45,7 @@ function readHijri(body) {
     hijri.day && hijri.year &&
     hijri.month && hijri.month.en && hijri.month.ar &&
     hijri.weekday && hijri.weekday.en && hijri.weekday.ar;
-  if (!ok) throw new HijriError("data", "Reply is missing expected fields");
+  if (!ok) throw new UI.RequestError("data", "Reply is missing expected fields");
   return hijri;
 }
 
@@ -69,36 +56,13 @@ function arabicDigits(value) {
 
 /**
  * Requests the conversion. Resolves with the hijri object or rejects with
- * a HijriError. fetch does not reject on HTTP errors such as 500, so the
- * status is checked here explicitly.
+ * a UI.RequestError.
  * @param {Date} date
  * @returns {Promise<object>}
  */
-function fetchHijri(date) {
-  if (navigator.onLine === false) {
-    return Promise.reject(new HijriError("offline"));
-  }
-
-  const controller = new AbortController();
-  const timer = setTimeout(function () { controller.abort(); }, HIJRI_TIMEOUT);
-
-  return fetch(HIJRI_API + toApiDate(date), { signal: controller.signal })
-    .then(function (response) {
-      if (!response.ok) throw new HijriError("server", "HTTP " + response.status);
-      return response.json().catch(function () {
-        throw new HijriError("data", "Reply was not valid JSON");
-      });
-    })
-    .then(readHijri)
-    .catch(function (err) {
-      if (err instanceof HijriError) throw err;
-      if (err && err.name === "AbortError") throw new HijriError("timeout");
-      // fetch rejects with a TypeError when the request never completes.
-      // The connection may have dropped while it was in flight.
-      if (navigator.onLine === false) throw new HijriError("offline");
-      throw new HijriError("network", String(err));
-    })
-    .finally(function () { clearTimeout(timer); });
+async function fetchHijri(date) {
+  const body = await UI.fetchJSON(HIJRI_API + toApiDate(date), HIJRI_TIMEOUT);
+  return readHijri(body);
 }
 
 UI.init("hijri", function () {
@@ -161,9 +125,9 @@ UI.init("hijri", function () {
         if (moveFocus) refresh.focus();
       })
       .catch(function (err) {
-        // fetchHijri only rejects with HijriError, so anything else came
+        // fetchHijri only rejects with RequestError, so anything else came
         // from formatting the reply in showResult.
-        showError(err instanceof HijriError ? err : new HijriError("data", String(err)));
+        showError(err instanceof UI.RequestError ? err : new UI.RequestError("data", String(err)));
         if (moveFocus) retry.focus();
       });
   }

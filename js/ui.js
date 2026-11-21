@@ -1,6 +1,7 @@
 // Shared helpers used by every feature script. Everything lives on one UI
 // object so plain (non-module) scripts do not collide on top-level names.
-// Sections: feature start-up, storage, reduced motion, toasts, scroll reveal.
+// Sections: feature start-up, storage, timing, network requests, reduced
+// motion, toasts, scroll reveal.
 
 const UI = (function () {
   /**
@@ -26,13 +27,21 @@ const UI = (function () {
   }
 
   // ---------- Storage ----------
-  // localStorage wrappers. setItem throws rather than failing quietly when
-  // storage is disabled or full, so both directions are guarded.
+  // Web Storage wrappers. setItem throws rather than failing quietly when
+  // storage is disabled or full, and even reading window.localStorage can
+  // throw when site data is blocked, so every access is guarded.
+  // `area` is "local" (kept between visits, the default) or "session"
+  // (kept until the tab is closed).
+
+  /** @returns {Storage} the storage area to use; may throw */
+  function storageArea(area) {
+    return area === "session" ? window.sessionStorage : window.localStorage;
+  }
 
   /** @returns {string|null} the stored value, or fallback if unreadable */
-  function load(key, fallback) {
+  function load(key, fallback, area) {
     try {
-      const value = localStorage.getItem(key);
+      const value = storageArea(area).getItem(key);
       return value === null ? fallback : value;
     } catch (err) {
       return fallback;
@@ -40,9 +49,9 @@ const UI = (function () {
   }
 
   /** @returns {boolean} true if the value was saved */
-  function save(key, value) {
+  function save(key, value, area) {
     try {
-      localStorage.setItem(key, value);
+      storageArea(area).setItem(key, value);
       return true;
     } catch (err) {
       return false;
@@ -50,9 +59,9 @@ const UI = (function () {
   }
 
   /** @returns {boolean} true if the key was removed */
-  function remove(key) {
+  function remove(key, area) {
     try {
-      localStorage.removeItem(key);
+      storageArea(area).removeItem(key);
       return true;
     } catch (err) {
       return false;
@@ -77,6 +86,67 @@ const UI = (function () {
     }
     delayed.cancel = function () { clearTimeout(timer); };
     return delayed;
+  }
+
+  // ---------- Network requests ----------
+  // Shared by js/hijri.js and js/github.js, so both APIs fail in the same
+  // well-defined ways and each feature only decides what to say.
+
+  /**
+   * A failed request. `kind` says what went wrong, so each feature can pick
+   * its own message; `detail` is for the console only, never the page.
+   *   offline  the device reported no connection
+   *   timeout  no complete reply within the time limit
+   *   network  the request never completed (blocked, DNS, dropped)
+   *   http     a reply came back with an error status; see `response`
+   *   data     the reply was not usable JSON, or not the expected shape
+   */
+  class RequestError extends Error {
+    constructor(kind, detail, response) {
+      super(detail || kind);
+      this.name = "RequestError";
+      this.kind = kind;
+      this.detail = detail || kind;
+      this.response = response || null;
+    }
+  }
+
+  /**
+   * Fetches a URL and parses the reply as JSON, rejecting only with a
+   * RequestError. fetch itself does not reject on HTTP errors such as 404
+   * or 500, so the status is checked here. The time limit covers reading
+   * the body too, not just the first byte.
+   * @param {string} url
+   * @param {number} timeout milliseconds before the request is abandoned
+   * @returns {Promise<*>} the parsed body
+   */
+  async function fetchJSON(url, timeout) {
+    if (navigator.onLine === false) throw new RequestError("offline");
+
+    const controller = new AbortController();
+    const timer = setTimeout(function () { controller.abort(); }, timeout);
+
+    try {
+      const response = await fetch(url, { signal: controller.signal });
+      if (!response.ok) {
+        throw new RequestError("http", "HTTP " + response.status, response);
+      }
+      try {
+        return await response.json();
+      } catch (err) {
+        if (err.name === "AbortError") throw err;   // timed out mid-body
+        throw new RequestError("data", "Reply was not valid JSON");
+      }
+    } catch (err) {
+      if (err instanceof RequestError) throw err;
+      if (err && err.name === "AbortError") throw new RequestError("timeout");
+      // fetch rejects with a TypeError when the request never completes.
+      // The connection may have dropped while it was in flight.
+      if (navigator.onLine === false) throw new RequestError("offline");
+      throw new RequestError("network", String(err));
+    } finally {
+      clearTimeout(timer);
+    }
   }
 
   // ---------- Reduced motion ----------
@@ -164,6 +234,8 @@ const UI = (function () {
     save: save,
     remove: remove,
     debounce: debounce,
+    RequestError: RequestError,
+    fetchJSON: fetchJSON,
     prefersReducedMotion: prefersReducedMotion,
     toast: toast,
     clearToasts: clearToasts,
