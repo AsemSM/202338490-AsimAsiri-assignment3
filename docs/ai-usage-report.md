@@ -102,7 +102,15 @@ One more problem was caught by reading the code before it ran: the first version
 
 ## 6. Learning Outcomes
 
-_To be written by me, in my own words, before submission._
+**APIs and errors.** `fetch` only fails when a request never completes. A 404 or 500 still counts as a success, so the code has to check `response.ok` itself, and `AbortController` is needed so a slow server cannot leave the page loading forever. Most of the work on the GitHub section was handling failure: GitHub allows only 60 requests an hour without signing in, so the list is saved for 10 minutes, an old copy is shown with a warning if GitHub fails, and the rate limit is read from GitHub's headers to tell the visitor when to try again.
+
+**State.** `localStorage` keeps data between visits and `sessionStorage` only until the tab closes, which is why the timer uses the second. Saved data cannot be trusted when it is read back, so the saved GitHub list goes through the same check as a live reply. The timer taught me that a simple feature still has rules: count only while the tab is visible, use `performance.now()` because the device clock can change, and schedule each update on the next whole second so it does not drift.
+
+**Performance.** Measuring beats guessing. The page already scored well, but Lighthouse found 40 ms of extra layout work in the scroll animation that I would not have seen by looking. WebP halved the photo, and `srcset` with `sizes` lets the browser pick a smaller file on smaller screens. Some warnings, like text compression, are about the server, so knowing which ones to act on mattered too.
+
+**Working with AI.** The AI was fast, but its first version was not always right: the GitHub section showed "0 public repositories" after a reload because two parts of the code used different names for the same field, and it was caught only because every feature was tested in a real browser. My job was to make the decisions, make sure everything was tested, and understand the code well enough to explain it.
+
+_Drafted by Claude Code from what we worked through in C01, then read and approved by me after reading the code._
 
 ## 7. Responsible use and modifications
 
@@ -139,7 +147,7 @@ These are the parts of the new code worth being able to explain:
 
 | ID | Tool (model) | Date | Purpose | Files affected | What I changed and how I verified it |
 | --- | --- | --- | --- | --- | --- |
-| C01 | Claude Code (Claude Opus 5.5) | 2026-11-21 | Read Assignments 1 and 2, create the Assignment 3 folder from my Assignment 2 GitHub repository, then build Assignment 3: shared request function, GitHub repositories section, visit timer, performance pass with Lighthouse, tests, documentation, commits and push | `index.html`, `css/styles.css`, `js/ui.js`, `js/hijri.js`, `js/github.js` (new), `js/timer.js` (new), `assets/images/profile.webp` and `profile-600.webp` (new), `README.md`, `docs/technical-documentation.md`, `docs/ai-usage-report.md` | I chose the API (GitHub, keeping Hijri), cut the new features to the visit timer only, approved the Lighthouse download, and had it pushed from my account. Verified in Chromium through Playwright: every API failure forced with and without a saved copy, the cache rules, the timer, six widths in both themes, contrast, keyboard, JavaScript off, `file://`, Assignment 2 features, and Lighthouse before and after. Three bugs found and fixed, listed in section 4 |
+| C01 | Claude Code (Claude Opus 5.5) | 2026-11-21 | Read Assignments 1 and 2, create the Assignment 3 folder from my Assignment 2 GitHub repository, then build Assignment 3: shared request function, GitHub repositories section, visit timer, performance pass with Lighthouse, tests, documentation, commits and push | `index.html`, `css/styles.css`, `js/ui.js`, `js/hijri.js`, `js/github.js` (new), `js/timer.js` (new), `assets/images/profile.webp` and `profile-600.webp` (new), `README.md`, `docs/technical-documentation.md`, `docs/ai-usage-report.md` | I chose the API (GitHub, keeping Hijri), cut the new features to the visit timer only, approved the Lighthouse download, and had it pushed from my account. The Learning Outcomes section was drafted by the AI at my request and approved by me after reading the code. Verified in Chromium through Playwright: every API failure forced with and without a saved copy, the cache rules, the timer, six widths in both themes, contrast, keyboard, JavaScript off, `file://`, Assignment 2 features, and Lighthouse before and after. Three bugs found and fixed, listed in section 4 |
 | A01 | Claude Code (Claude Opus 5.5) | 2026-11-21 | The project files as the AI produced them at the end of C01, before any edits of mine | Every file in the repository | Included in the AI evidence ZIP under `artifacts/` |
 | A02 | Lighthouse 12.8.2, run by Claude Code | 2026-11-21 | Lighthouse reports for this code, mobile and desktop | None (reports only) | Included in the AI evidence ZIP under `artifacts/`. The scores are in the README and the technical documentation |
 
