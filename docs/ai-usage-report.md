@@ -1,131 +1,152 @@
 # AI Usage Report
 
-SWE 363 Assignment 2, Asim Asiri. This report covers only what happened while building Assignment 2. Every bug listed here really happened and was found the way described. Nothing is made up.
+SWE 363 Assignment 3, Asim Asiri. This report covers only what happened while building Assignment 3. Every bug listed here really happened and was found the way described. Nothing is made up. The full conversation is in the AI evidence ZIP submitted on Blackboard.
 
-## 1. Tools used
+## 1. Tools used and use cases
 
 | Tool | What it was used for |
 | --- | --- |
-| Claude Code (Anthropic), running the Claude Opus 5.5 model | Planning, writing all HTML, CSS and JavaScript, running the browser tests, writing these docs |
-| Playwright, driven by Claude Code | Opening the page in a real Chromium browser after every prompt: checking console errors, clicking and typing, taking screenshots, emulating phones, dark and light mode, reduced motion, JavaScript off, offline mode and blocked storage, and intercepting API requests to force failures |
-| axe-core 4.10.2 | Automated accessibility audit, loaded into the test browser only. Not part of the project. |
-| Python | `http.server` as a local test server, and `pypdf` to read the text of my CV so project details matched it |
+| Claude Code (Anthropic), running the Claude Opus 5.5 model | Reading Assignments 1 and 2 and the new brief, planning, writing all new HTML, CSS and JavaScript, refactoring the Hijri request onto a shared function, running the browser tests and Lighthouse, writing these docs, making the commits on feature branches |
+| Playwright, driven by Claude Code | Opening the page in a real Chromium browser: checking console errors, clicking and typing, keyboard navigation, screenshots, phone widths, both themes, JavaScript off, opening from `file://`, and replacing `fetch` to force every API failure |
+| Lighthouse 12.8.2, run by Claude Code | Performance, accessibility, best practices and SEO audits, mobile and desktop, before and after the changes |
+| Python, run by Claude Code | `http.server` as a local test server, Pillow to make the WebP versions of the photo, and short scripts to summarise the Lighthouse reports |
+| Git and the GitHub CLI, run by Claude Code | Branches, commits and pushing to my repository from my own account |
 
-Playwright, axe-core and Python are not AI tools, but Claude Code ran all of them.
+Playwright, Lighthouse, Python and Git are not AI tools, but Claude Code ran all of them.
 
-A handoff note from an earlier planning chat (`HANDOFF.md`, outside this folder) gave the requirement list and the grading rubric at the start.
+All the work was done in one Claude Code session (C01 in section 9).
 
 ## 2. What the AI did and what I did
 
 **What I did**
 
-- Wrote every prompt, one feature area at a time: setup, theme, greeting, projects, the Hijri API, the contact form, polish and these docs.
-- Made the decisions in each prompt: keep the Assignment 1 design, plain HTML, CSS and JS that works when opened directly, the theme colours, the nine projects with their order, results, technologies and topics, the Aladhan API, the validation rules (32-character name limit, 10-character message), the breakpoints, and what to test.
-- Required a browser check after every prompt, plus a check that Assignment 1 was not changed.
-- Supplied the facts the AI did not have, such as the results and technologies for the four projects that are not in my CV.
+- Asked Claude Code to read Assignments 1 and 2 first, then gave it the Assignment 3 brief and asked it to set up the folder from my Assignment 2 GitHub repository.
+- Made the feature decisions when asked. For the API I chose my GitHub repositories, and to keep the Hijri panel as well. From four offered features (visit timer, experience level picker, remembering the project view, a stricter contact flow) I chose only the visit timer.
+- Decided the repository should be pushed from my own account through git in the terminal, so the commits are mine.
+- Approved downloading Lighthouse to run the audits the brief asks for.
 
 **What the AI did**
 
-- Wrote all the code and the comments in it.
-- Chose the implementation details: one state object and one render function for the projects, pure validation functions, the five API error kinds, a timeout using `AbortController`, building the request date from local time, the in-page fallbacks for when JavaScript fails.
-- Tested every prompt's result in the browser and fixed what the tests found.
-- Kept `CLAUDE.md` up to date with a session log after each prompt, which this report is based on.
-- Wrote the README and both docs.
+- Wrote all the new code and the comments in it: `js/github.js`, `js/timer.js`, `UI.fetchJSON` and `UI.RequestError` in `js/ui.js`, the new HTML sections and the CSS for them.
+- Chose the implementation details: the four-step loading rule with a 10-minute cache, detecting the rate limit from GitHub's headers, checking saved copies with the same function as live replies, rejecting links that do not point at github.com, counting only visible time with `performance.now()`, scheduling the timer on whole seconds, and the responsive image sizes.
+- Moved the Hijri request onto the shared function, so the two APIs do not have duplicate code.
+- Tested every feature in the browser and fixed what the tests found.
+- Ran Lighthouse before and after, and acted on what it found.
+- Wrote the README and both docs, and kept a session log in a working notes file (`CLAUDE.md`, not part of the repository).
+- Made the commits on feature branches, each with an `Assisted-by` line.
 
 ## 3. How the work was tested
 
-After each prompt, Claude Code opened the page in Chromium and checked it, instead of assuming the code worked. The main techniques:
+After each feature, Claude Code opened the page in Chromium and checked it, instead of assuming the code worked.
 
-- **Opening `index.html` from `file://`** as well as from a local server, to prove the "open the file directly" setup works.
-- **Fresh browser contexts** with a set colour scheme, reduced motion setting, time zone, clock or phone size.
-- **Blocking storage** by making `localStorage.getItem`, `setItem` and `removeItem` throw, to test the theme and name fallbacks.
-- **Breaking scripts on purpose:** blocking `data.js`, `ui.js`, `projects.js` and `hijri.js` one at a time, making `greeting.js` throw, and giving `theme.js` a syntax error, to prove one failure does not stop the rest.
-- **Fixed clocks** at 11:59, 12:00, 17:59, 18:00 and 00:30 to test the greeting boundaries, and 01:30 Riyadh time to prove the Hijri request uses the local date, not UTC.
-- **Measuring instead of eyeballing:** text contrast computed from real colours, horizontal overflow from `scrollWidth`, which elements were visible, and the order focus moves through.
-- **Screenshots** of both themes and phone widths, which caught several layout bugs the numbers did not.
-- **Hashing every file in Assignment 1** before and after each prompt. They never changed.
+- **Forcing API failures.** `window.fetch` was replaced with fake versions that return a 403 with the rate-limit headers, a 403 without them, a 404, a 500, a reply that is not JSON, a reply that is not a list, a rejected request, and a request that never answers. Each was run twice, once with a saved copy of the repositories and once without.
+- **Saved copies of different ages.** The saved timestamp was edited to 5 minutes ago, 2 hours ago and 1 hour in the future, to test each branch of the cache rule. A saved copy with a `javascript:` link was written by hand to test that it is rejected.
+- **The timer.** The page was told the tab was hidden by overriding `document.hidden` and firing `visibilitychange`, to check the count stops and resumes. The page was reloaded to check the count continues. Storage was made to throw.
+- **Counting requests.** The browser's resource timing list was read after a reload, to prove a fresh saved copy makes no request to GitHub.
+- **Measuring.** Sideways overflow at six widths in both themes, text contrast of every new element in both themes, the number of grid columns, and the tab order to the repository cards.
+- **JavaScript off and `file://`.** Separate browser contexts with JavaScript disabled and with the page opened from disk.
+- **Regression.** The Assignment 2 features (theme, name, search and filter, contact form) were run again after the changes.
+- **Lighthouse,** mobile and desktop, on the Assignment 2 code and on this code.
 
-### Forced API failures
+### Forced GitHub failures
 
-The Hijri section was tested by intercepting the request to `api.aladhan.com` and replacing the reply. On a page that had already loaded the date, each failure was forced and then Refresh was pressed:
+| Forced failure | With no saved copy | With a saved copy |
+| --- | --- | --- |
+| 403 with `x-ratelimit-remaining: 0` | Rate limit message with the reset time | Saved list plus the rate limit message |
+| 403 without the rate-limit header | Server problem message | Saved list plus the server message |
+| 404 | Account not found message | Saved list plus that message |
+| 500 | Server problem message | Saved list plus that message |
+| Reply not JSON | Unreadable reply message | Saved list plus that message |
+| Reply not a list | Unreadable reply message | Saved list plus that message |
+| Rejected request | Could not be reached message | Saved list plus that message |
+| Offline | Offline message | |
+| Never answers | Timeout message after 8.03 seconds | |
 
-| Forced failure | Result |
-| --- | --- |
-| Browser set offline | Offline message |
-| Request aborted | "Could not be reached" message |
-| HTTP 500 and HTTP 404 | Server problem message |
-| Reply missing the date fields | Unreadable reply message |
-| Reply that was not JSON | Unreadable reply message |
-| Reply with `code: 400` | Unreadable reply message |
-| Request that never answers | Timeout message after 8.08 seconds |
-| Offline on the very first load | Offline message |
-
-After each one, the network was restored and Try again was pressed. The date came back every time, with focus on the Refresh button. The words "Failed to fetch" never appeared on the page.
-
-Before writing the error handling, the AI also called the real API with an impossible date (`99-99-2026`). It returned HTTP 200 with a made-up date, which showed that checking the HTTP status alone is not enough. That is why the reply's own fields are checked too.
+After each one, the real `fetch` was put back and Try again was pressed. The list came back every time, with focus on the Refresh button. "Failed to fetch" never appeared on the page. The Hijri panel was put through offline, 500, missing fields and a rejected request after its refactor, and behaved exactly as in Assignment 2.
 
 ## 4. Bugs found and fixed
 
-These are the bugs the browser checks found in the page. Each one was in code the AI had just written.
+These are the bugs the checks found. Each one was in code the AI had just written, except number 3, which was in the AI's Assignment 2 code.
 
 | # | Bug | How it was found | Fix |
 | --- | --- | --- | --- |
-| 1 | When scroll reveal switched on, sections below the screen faded out over 0.6 s instead of hiding at once | Reading the computed opacity of each section straight after load | Moved the transition onto the visible state only, so hiding is instant and only the reveal animates |
-| 2 | The new theme toggle made the page scroll sideways: by 1px at 360px and by 21px at 320px. Assignment 1 fit at 320px | Comparing `scrollWidth` with the window width at several sizes, then measuring which elements stuck out | Tighter header gaps and a smaller toggle under 560px, narrower nav padding under 380px |
-| 3 | The placeholder text in the name box was the browser's default grey, about 4.0:1 on the dark field, below 4.5:1 | Contrast measurement | Set `::placeholder` to the muted text colour with `opacity: 1` (4.84:1 dark, 6.09:1 light) |
-| 4 | With one project left in the data, the count read "Showing 1 of 1 projects" | The test that feeds in broken data | Singular "project" when the total is 1 |
-| 5 | On a phone, the search placeholder was cut off ("...technolog") | Screenshot at 360px | Shorter placeholder: "Search projects or technologies" |
-| 6 | An odd number of results left half of the last row empty | Screenshot of the Hackathon filter (5 results) | An odd last card spans the full row |
-| 7 | On a 320px phone, the Arabic era marker هـ wrapped onto a line by itself | Screenshot | A no-break space between the year and هـ, and the same for AH |
-| 8 | After a failed submit then a valid one, the old "fields need fixing" notifications stayed on screen next to the thank you | Screenshot | New `UI.clearToasts()`, called on every submit |
-| 9 | Pill-shaped buttons turned into near-square boxes while they had keyboard focus | Screenshot of a focused filter button | Removed `border-radius` from the global focus rule. Outlines follow the element's own corners |
+| 1 | After a reload, the GitHub section said "0 public repositories" and "There are no public repositories on this account yet", although four were saved. The saved objects used the field name `url`, but the check that reads them back required GitHub's `html_url`, so every saved repository was thrown away | The first browser check of the section | The page now keeps GitHub's own field names, so the same check works on live replies and saved copies. A saved copy whose entries all fail the check is now treated as broken and ignored, instead of being shown as an empty account |
+| 2 | On wide screens the four repository cards were laid out as a row of three and one card alone | Screenshot at 1280px | A fixed two-column grid, one column on phones, with an odd last card spanning the row like the project grid |
+| 3 | The scroll reveal measured every section with `getBoundingClientRect()` at start-up, forcing an extra layout. Lighthouse attributed 40.8 ms to it on mobile | Lighthouse forced reflow audit | Positions are now read from the IntersectionObserver's first report, which provides them without forcing a layout. Re-tested: sections on screen still show at once, the rest fade in on scroll, and loading at `#contact` shows everything above it |
+
+One more problem was caught by reading the code before it ran: the first version of `js/github.js` used `STAGGER_CAP`, a constant defined in `js/projects.js`. That works while both files load, but would throw if `projects.js` failed, which goes against the rule that one feature cannot stop another. It got its own constant.
 
 **Problems in the process, not the page:**
 
-- On the first check, the project cards did not appear. The test browser was serving JavaScript files with the same names from its cache, from an earlier build on the same port. Found by comparing the served file with the file on disk. Fixed by forcing a fresh load and using a new port for later tests.
-- Some of the AI's own test readings were wrong, and the page was fine each time:
-  - The focus ring check read the 2px outline as 1.6px because of display scaling, and reported 24 controls as having no ring. A screenshot showed the rings were there.
-  - The reduced motion check read card opacity in the same frame the page loaded and reported cards as not fully visible. Reading again after 100 ms showed all of them at full opacity.
-  - The contact form check read the field borders while their colour was still fading in and reported them as not red. Reading after the fade showed the red border.
-  - One early test cleared its own list of console errors before reporting it, so it would have missed errors. The browser's console log file was read instead, and showed only the errors caused on purpose.
-- Three times, an edit the AI made with a shell command did not apply. Once a stray command waited for input, once a wrong input redirect fed the script nothing, and once an exact-match check stopped the script because of one capital letter. Each time the AI checked the file, saw the change was missing, and applied it again.
+- The first test of the scroll reveal fix reported that no section appeared when scrolled to. The app's browser pane was hidden at the time, and a hidden page does not run IntersectionObserver callbacks. Run again in Playwright's browser, it worked.
+- One test script went from `/` to `/#github`, which only changes the hash and does not reload the page. So each check read the page from the previous step, and the dark and light results looked swapped.
+- The test browser kept serving an old copy of `styles.css`, so the grid fix looked like it had not worked. Comparing the stylesheet the page had loaded with the file on the server showed the difference. A forced reload fixed it.
+- The first Lighthouse summary script failed because Python on Windows read the report with the wrong text encoding. It was run again with UTF-8.
+- An axe-core accessibility run, done in Assignment 2, was blocked this time by Claude Code's permission system, because it loads a script from a CDN into the page. It was not worked around. Contrast was measured by hand instead, and Lighthouse's accessibility audit scored 100.
 
-## 5. Benefits
+## 5. Benefits and challenges
 
-- **Speed.** Each feature area took one prompt, including its tests.
-- **Testing I would not have done by hand.** Forcing eight kinds of API failure, blocking storage, breaking individual scripts, setting the clock to just after midnight in Riyadh, and measuring contrast on 125 elements per theme would each take a long time manually.
-- **Bugs caught before submission.** All nine bugs above were found by the AI's own browser checks, not by me noticing them later.
-- **Consistent structure.** Every feature follows the same pattern (state, one render function, safe start in the HTML), which makes the code easier to read and explain.
+### Benefits
 
-## 6. Challenges
+- **Testing I would not have done by hand.** Forcing nine kinds of API failure in two situations each, editing cache timestamps, faking a hidden tab and counting network requests would each take a long time manually.
+- **Measured performance work.** Lighthouse was run before and after, and the one real problem it found in the page's code (the forced layout) was fixed and confirmed gone.
+- **Less duplicated code.** Adding a second API was the point where the AI moved the request logic into one shared function instead of copying it.
+- **A clean history.** Each feature was built on its own branch and merged, with a commit message that says what changed and why.
 
-- **The AI does not know what it has not been told.** My CV does not describe Tahseel, Nahj, AI File Manager or Abra-Ca-Burger, so their descriptions only repeat the facts I gave. They need a line from me on what each project does.
-- **Its first version is not always right.** Nine bugs got through the first version of the code. They were caught only because every prompt required a real browser check.
-- **Its tests can be wrong.** Three false failures and one test that could have missed errors came from the test code itself, not the page.
-- **Only Chromium.** The automated browser was Chromium, so Firefox and Safari are untested.
+### Challenges
 
-## 7. Responsible use
+- **Its first version is not always right.** Bug 1 would have shown an empty GitHub section to every returning visitor. It was found only because the feature was opened in a browser.
+- **Its tests can be wrong.** Three test readings were wrong (the hidden pane, the hash-only navigation, the cached stylesheet). Each time the page was fine and the test had to be fixed.
+- **Tool limits.** The axe-core run could not happen. Only Chromium was available, so Firefox and Safari are untested.
+- **It needs my decisions.** The AI asked before choosing the API, the features, downloading Lighthouse and pushing. Those were real choices with trade-offs, not things it could look up.
 
-- **No invented content.** Project descriptions come from my CV or from what I wrote in the prompts. Where neither said what a project does, the description says only what is known.
-- **No invented bugs or results.** This report lists only what the session log in `CLAUDE.md` recorded.
-- **Honest limits.** The docs say plainly what was not tested. When the contrast check found the text field borders were below the 3:1 guideline, that was reported instead of hidden, and fixed when I asked.
-- **No hidden code.** There are no libraries or copied code, and every script is plain, commented JavaScript I can read.
-- **Privacy.** The contact form sends nothing and says so. The only data stored is the theme and the name the visitor types, both in their own browser.
-- **My own words where it counts.** Learning Outcomes is left for me to write.
-
-## 8. Modifications to the AI's output
-
-The changes below were made after the AI's first version, in response to the browser checks or to my prompts:
-
-- The nine bug fixes in section 4.
-- The light theme was changed from a cool grey to a warm off-white with white cards, after my prompt asked for it.
-- The theme was changed from "saved choice only" to "follow the device until the visitor chooses".
-- `<noscript>` messages were replaced with messages inside the Projects and Today areas, so they also show when one script fails, not only when JavaScript is off.
-- On phones, form fields were raised to 16px so iOS Safari does not zoom in on focus.
-- Text field borders were raised to 3:1 contrast in both themes after my prompt asked for it, using a new `--field-border` token so cards, dividers and the rest of the design stay the same.
-
-Changes recorded in the session log were made through prompts.
-
-## 9. Learning Outcomes
+## 6. Learning Outcomes
 
 _To be written by me, in my own words, before submission._
+
+## 7. Responsible use and modifications
+
+### Responsible use
+
+- **No invented data.** The GitHub section shows exactly what GitHub returns for my account. No numbers or results are made up.
+- **No secrets.** The GitHub and Aladhan APIs need no key or token. No password, token or `.env` content was shared with the AI or put in the repository.
+- **No invented bugs or results.** This report lists only what the session log recorded, and the C01 conversation shows each test being run.
+- **Honest limits.** The docs say plainly what was not tested and what Lighthouse still lists.
+- **Evidence kept out of the repository.** The conversation and the intermediate files are in the AI evidence ZIP, not in the repository. `.gitignore` excludes `conversations/`, `artifacts/` and the ZIP.
+- **Credit in the history.** Every commit with AI-assisted code has an `Assisted-by: Claude Code (Claude Opus 5.5)` line.
+
+### Modifications to the AI's output
+
+These changes were made after the AI's first version, in response to the browser checks, Lighthouse, or my decisions:
+
+- The three bug fixes in section 4, and the `STAGGER_CAP` change.
+- Long repository descriptions were limited to four lines after the first screenshot showed one card much taller than the rest.
+- The photo quality was chosen by comparing the file sizes of three WebP qualities (75, 80 and 85) and checking the chosen one by eye. A 600px version was added after measuring how wide the photo is actually drawn.
+- The scope of the new features was cut to what I chose: the GitHub section and the visit timer. The other three offered features were not built.
+
+## 8. Code I need to understand before submitting
+
+These are the parts of the new code worth being able to explain:
+
+- `UI.fetchJSON` in `js/ui.js`: why `fetch` needs an explicit `response.ok` check, and how `AbortController` gives a timeout.
+- `load()` in `js/github.js`: the four steps, and why an old copy with a warning is better than an error.
+- `describeFailure()` in `js/github.js`: how a 403 is told apart from the rate limit.
+- `toRepo()` in `js/github.js`: why its output must be valid input to itself.
+- `elapsed()`, `pause()` and `resume()` in `js/timer.js`: why `performance.now()` and not `Date.now()`.
+- `reveal()` in `js/ui.js`: why reading `entry.boundingClientRect` avoids a forced layout.
+
+## 9. Usage Log
+
+| ID | Tool (model) | Date | Purpose | Files affected | What I changed and how I verified it |
+| --- | --- | --- | --- | --- | --- |
+| C01 | Claude Code (Claude Opus 5.5) | 2026-11-21 | Read Assignments 1 and 2, create the Assignment 3 folder from my Assignment 2 GitHub repository, then build Assignment 3: shared request function, GitHub repositories section, visit timer, performance pass with Lighthouse, tests, documentation, commits and push | `index.html`, `css/styles.css`, `js/ui.js`, `js/hijri.js`, `js/github.js` (new), `js/timer.js` (new), `assets/images/profile.webp` and `profile-600.webp` (new), `README.md`, `docs/technical-documentation.md`, `docs/ai-usage-report.md` | I chose the API (GitHub, keeping Hijri), cut the new features to the visit timer only, approved the Lighthouse download, and had it pushed from my account. Verified in Chromium through Playwright: every API failure forced with and without a saved copy, the cache rules, the timer, six widths in both themes, contrast, keyboard, JavaScript off, `file://`, Assignment 2 features, and Lighthouse before and after. Three bugs found and fixed, listed in section 4 |
+| A01 | Claude Code (Claude Opus 5.5) | 2026-11-21 | The project files as the AI produced them at the end of C01, before any edits of mine | Every file in the repository | Included in the AI evidence ZIP under `artifacts/` |
+| A02 | Lighthouse 12.8.2, run by Claude Code | 2026-11-21 | Lighthouse reports for this code, mobile and desktop | None (reports only) | Included in the AI evidence ZIP under `artifacts/`. The scores are in the README and the technical documentation |
+
+## 10. Declaration
+
+I declare that this report and the attached evidence document all of my AI use in this assignment, with complete and unedited conversations, and that I understand and can explain all the code I submitted after it was generated. I understand that undeclared AI use or a false declaration will be treated as plagiarism according to KFUPM regulations if i did not read the code before submiting.
+
+**Name:** Asim Asiri
+**Student ID:** 202338490
+**Date:** 2026-11-21
