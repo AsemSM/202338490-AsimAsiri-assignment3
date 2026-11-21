@@ -113,11 +113,23 @@
           <a class="btn-text" href="#contact">Get in touch</a>
         </div>
       </div>
-      <div class="hero-photo">
+      <!-- WebP is about half the size of the JPEG (26 KB against 50 KB) at
+           the same 900x600, and a 600px copy (15 KB) serves smaller screens.
+           `sizes` tells the browser the drawn width before CSS loads: the
+           full column on phones, and on wider screens 580px, because the
+           square desktop crop (object-fit: cover, about 385px) scales the
+           3:2 photo to about 1.5 times the box width. Browsers without WebP
+           fall back to the JPEG. The photo is the largest thing above the
+           fold, so it is fetched at high priority. width and height reserve
+           its space, so nothing shifts when it arrives. -->
+      <picture class="hero-photo">
+        <source type="image/webp"
+                srcset="assets/images/profile-600.webp 600w, assets/images/profile.webp 900w"
+                sizes="(max-width: 600px) calc(100vw - 32px), 580px" />
         <img src="assets/images/profile.jpg"
              alt="Asim Asiri in a white thobe and event lanyard, working on a laptop at a shared table, with other participants and a presentation screen in the background"
-             width="900" height="600" />
-      </div>
+             width="900" height="600" fetchpriority="high" />
+      </picture>
     </section>
 
     <div class="container">
