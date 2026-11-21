@@ -937,14 +937,20 @@ a { color: inherit; }
   font-size: 0.8125rem;
 }
 
+/* Two columns, one on phones. A fixed count rather than auto-fit, which
+   gave three columns on wide screens and left four repositories as a row
+   of three and a lone card. An odd last card spans the row, as in the
+   project grid. */
 .repo-list {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--s4);
   margin: 0;
   padding: 0;
   list-style: none;
 }
+
+.repo-list > :last-child:nth-child(odd) { grid-column: 1 / -1; }
 
 /* Same surface, lift and stagger as the project cards. position: relative
    anchors the stretched title link below. */
@@ -1344,7 +1350,8 @@ a { color: inherit; }
 
   .name-form-row { max-width: none; }
 
-  .project-grid { grid-template-columns: 1fr; }
+  .project-grid,
+  .repo-list { grid-template-columns: 1fr; }
 
   .project { padding: var(--s5); }
 
