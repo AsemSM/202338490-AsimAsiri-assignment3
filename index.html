@@ -24,6 +24,12 @@
     })();
   </script>
 
+  <!-- Opens the connections to both APIs while the page is still loading,
+       so the first request skips the DNS, TCP and TLS setup. crossorigin
+       because fetch() makes CORS requests, which use a separate connection. -->
+  <link rel="preconnect" href="https://api.github.com" crossorigin />
+  <link rel="preconnect" href="https://api.aladhan.com" crossorigin />
+
   <link rel="stylesheet" href="css/styles.css" />
 </head>
 <body>
@@ -202,31 +208,75 @@
         </div>
       </section>
 
+      <!-- GitHub: my public repositories, live from the GitHub API.
+           js/github.js shows exactly one of the three states at a time. All
+           start hidden, so nothing half-built shows if the script fails. -->
+      <section id="github" class="band" data-reveal>
+        <div class="band-label">
+          <p class="label">03</p>
+          <h2>GitHub</h2>
+        </div>
+        <div class="band-body">
+          <div class="github-panel" aria-live="polite" aria-busy="false" id="github-panel">
+
+            <div class="panel-state panel-loading" id="github-loading" hidden>
+              <span class="spinner" aria-hidden="true"></span>
+              <p>Loading repositories from GitHub&hellip;</p>
+            </div>
+
+            <div class="panel-state" id="github-result" hidden>
+              <div class="github-head">
+                <p class="github-count" id="github-count"></p>
+                <button type="button" class="btn-small" id="github-refresh">Refresh</button>
+              </div>
+              <ul class="repo-list" id="github-list"></ul>
+              <p class="github-source" id="github-source"></p>
+            </div>
+
+            <div class="panel-state panel-error" id="github-error" hidden>
+              <p class="panel-error-title">Couldn&rsquo;t load my GitHub repositories</p>
+              <p id="github-error-message"></p>
+              <button type="button" class="btn-small" id="github-retry">Try again</button>
+            </div>
+
+            <!-- Hidden by js/github.js when it starts. Stays only if
+                 JavaScript is off or the script fails. -->
+            <p class="notice" id="github-fallback">My repositories load live from GitHub with JavaScript.
+              Turn it on and reload, or visit my profile below.</p>
+          </div>
+          <p class="panel-note">
+            Fetched from the public <a href="https://docs.github.com/en/rest" rel="noopener">GitHub REST API</a>
+            and saved in your browser for 10 minutes.
+            <a href="https://github.com/AsemSM" rel="noopener">See my GitHub profile</a>.
+          </p>
+        </div>
+      </section>
+
       <!-- Today: the visitor's date in the Hijri calendar, from a public API.
            js/hijri.js shows exactly one of the three states at a time. All
            start hidden, so nothing half-built shows if the script fails. -->
       <section id="today" class="band" data-reveal>
         <div class="band-label">
-          <p class="label">03</p>
+          <p class="label">04</p>
           <h2>Today</h2>
         </div>
         <div class="band-body">
           <div class="today-panel" aria-live="polite" aria-busy="false" id="hijri-panel">
 
-            <div class="today-state" id="hijri-loading" hidden>
+            <div class="panel-state panel-loading" id="hijri-loading" hidden>
               <span class="spinner" aria-hidden="true"></span>
               <p>Converting today&rsquo;s date&hellip;</p>
             </div>
 
-            <div class="today-state" id="hijri-result" hidden>
+            <div class="panel-state" id="hijri-result" hidden>
               <p class="today-en" id="hijri-en"></p>
               <p class="today-ar" id="hijri-ar" lang="ar" dir="rtl"></p>
               <p class="today-greg" id="hijri-greg"></p>
               <button type="button" class="btn-small" id="hijri-refresh">Refresh</button>
             </div>
 
-            <div class="today-state today-error" id="hijri-error" hidden>
-              <p class="today-error-title">Couldn&rsquo;t load today&rsquo;s Hijri date</p>
+            <div class="panel-state panel-error" id="hijri-error" hidden>
+              <p class="panel-error-title">Couldn&rsquo;t load today&rsquo;s Hijri date</p>
               <p id="hijri-error-message"></p>
               <button type="button" class="btn-small" id="hijri-retry">Try again</button>
             </div>
@@ -235,7 +285,7 @@
                  JavaScript is off or the script fails. -->
             <p id="hijri-fallback">Today&rsquo;s Hijri date is converted live with JavaScript. Turn it on and reload to see it.</p>
           </div>
-          <p class="today-note">
+          <p class="panel-note">
             Converted live from your device&rsquo;s date by the free
             <a href="https://aladhan.com/islamic-calendar-api" rel="noopener">Aladhan</a> public API.
           </p>
@@ -245,7 +295,7 @@
       <!-- Contact: front end only, the form does not submit anywhere -->
       <section id="contact" class="band" data-reveal>
         <div class="band-label">
-          <p class="label">04</p>
+          <p class="label">05</p>
           <h2>Contact</h2>
         </div>
         <div class="band-body">
@@ -319,6 +369,7 @@
   <script src="js/greeting.js" defer></script>
   <script src="js/projects.js" defer></script>
   <script src="js/contact.js" defer></script>
+  <script src="js/github.js" defer></script>
   <script src="js/hijri.js" defer></script>
 </body>
 </html>
